@@ -9,6 +9,7 @@ from config import BOT_TOKEN
 from database.database import init_database
 from handlers.start import router as start_router
 from handlers.profile import router as profile_router
+from handlers.transfer import router as transfer_router
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -23,10 +24,10 @@ dp = Dispatcher()
 # Routerlarni ulash
 dp.include_router(start_router)
 dp.include_router(profile_router)
+dp.include_router(transfer_router)
 
 
 async def main():
-    # Bazani ishga tushirish
     await init_database()
     
     print("KAGE POKER bot ishga tushmoqda...")

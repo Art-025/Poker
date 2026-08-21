@@ -8,6 +8,7 @@ from aiogram.enums import ParseMode
 from config import BOT_TOKEN
 from database.database import init_database
 from handlers.start import router as start_router
+from handlers.profile import router as profile_router
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -21,6 +22,7 @@ dp = Dispatcher()
 
 # Routerlarni ulash
 dp.include_router(start_router)
+dp.include_router(profile_router)
 
 
 async def main():

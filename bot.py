@@ -6,8 +6,10 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from config import BOT_TOKEN
+from database.database import init_database
+from handlers.start import router as start_router
 
-# Logging sozlamasi
+# Logging
 logging.basicConfig(level=logging.INFO)
 
 # Bot va Dispatcher
@@ -17,8 +19,14 @@ bot = Bot(
 )
 dp = Dispatcher()
 
+# Routerlarni ulash
+dp.include_router(start_router)
+
 
 async def main():
+    # Bazani ishga tushirish
+    await init_database()
+    
     print("KAGE POKER bot ishga tushmoqda...")
     await dp.start_polling(bot)
 

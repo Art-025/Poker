@@ -10,6 +10,7 @@ from database.database import init_database
 from handlers.start import router as start_router
 from handlers.profile import router as profile_router
 from handlers.transfer import router as transfer_router
+from handlers.help import router as help_router
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +26,7 @@ dp = Dispatcher()
 dp.include_router(start_router)
 dp.include_router(profile_router)
 dp.include_router(transfer_router)
+dp.include_router(help_router)
 
 
 async def main():

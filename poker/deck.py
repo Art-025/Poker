@@ -41,7 +41,7 @@ class Deck:
             raise ValueError("Kolodada yetarli karta yo'q")
         dealt = self.cards[:num]
         self.cards = self.cards[num:]
-        return dealt
+        return dealt 
 
     def remaining(self) -> int:
         return len(self.cards)

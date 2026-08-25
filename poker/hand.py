@@ -108,4 +108,19 @@ class HandEvaluator:
             if unique[i] - unique[i+4] == 4:
                 return True, unique[i]
 
-        # A-2-3-4
+        # A-2-3-4-5 (wheel)
+        if set([14, 2, 3, 4, 5]).issubset(set(values)):
+            return True, 5
+
+        return False, 0
+
+    @staticmethod
+    def _get_n_of_a_kind(values: List[int], n: int) -> List[int]:
+        from collections import Counter
+        counts = Counter(values)
+        result = [v for v, cnt in counts.items() if cnt == n]
+        return sorted(result, reverse=True)
+
+    @staticmethod
+    def _get_all_pairs(values: List[int]) -> List[int]:
+        return HandEvaluator._get_n_of_a_kind(values, 2)

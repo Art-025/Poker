@@ -12,6 +12,7 @@ from handlers.profile import router as profile_router
 from handlers.transfer import router as transfer_router
 from handlers.help import router as help_router
 from handlers.rules import router as rules_router
+from handlers.poker import router as poker_router
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -29,6 +30,7 @@ dp.include_router(profile_router)
 dp.include_router(transfer_router)
 dp.include_router(help_router)
 dp.include_router(rules_router)
+dp.include_router(poker_router)
 
 
 async def main():

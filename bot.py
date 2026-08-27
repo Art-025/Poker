@@ -7,17 +7,18 @@ from aiogram.enums import ParseMode
 
 from config import BOT_TOKEN
 from database.database import init_database
+
 from handlers.start import router as start_router
 from handlers.profile import router as profile_router
 from handlers.transfer import router as transfer_router
 from handlers.help import router as help_router
 from handlers.rules import router as rules_router
-from handlers.poker import router as poker_router
+from handlers.lobby import router as lobby_router
+from handlers.groups import router as groups_router
 
 # Logging
 logging.basicConfig(level=logging.INFO)
 
-# Bot va Dispatcher
 bot = Bot(
     token=BOT_TOKEN,
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
@@ -25,17 +26,17 @@ bot = Bot(
 dp = Dispatcher()
 
 # Routerlarni ulash
+dp.include_router(groups_router)      # Eng birinchi (muhim)
 dp.include_router(start_router)
 dp.include_router(profile_router)
 dp.include_router(transfer_router)
 dp.include_router(help_router)
 dp.include_router(rules_router)
-dp.include_router(poker_router)
+dp.include_router(lobby_router)
 
 
 async def main():
     await init_database()
-    
     print("KAGE POKER bot ishga tushmoqda...")
     await dp.start_polling(bot)
 

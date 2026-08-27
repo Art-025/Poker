@@ -74,3 +74,25 @@ async def get_or_create_player(user_id: int, username: str = None, full_name: st
             "games_played": player[4],
             "games_won": player[5]
         }
+async def is_group_approved(chat_id: int) -> bool:
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute(
+            "SELECT 1 FROM approved_groups WHERE chat_id = ?", (chat_id,)
+        ) as cursor:
+            row = await cursor.fetchone()
+            return row is not None
+
+
+async def approve_group(chat_id: int, title: str, approved_by: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "INSERT OR REPLACE INTO approved_groups (chat_id, title, approved_by) VALUES (?, ?, ?)",
+            (chat_id, title, approved_by)
+        )
+        await db.commit()
+
+
+async def remove_group(chat_id: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("DELETE FROM approved_groups WHERE chat_id = ?", (chat_id,))
+        await db.commit()

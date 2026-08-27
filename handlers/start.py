@@ -1,30 +1,33 @@
 from aiogram import Router
 from aiogram.types import Message
-from aiogram.filters import CommandStart
-
-from database.database import get_or_create_player
+from aiogram.filters import Command
 
 router = Router()
 
 
-@router.message(CommandStart())
+@router.message(Command("start"))
 async def cmd_start(message: Message):
-    user = message.from_user
-
-    player = await get_or_create_player(
-        user_id=user.id,
-        username=user.username,
-        full_name=user.full_name
-    )
-
     text = (
-        f"👋 Salom, <b>{user.full_name}</b>!\n\n"
-        f"🃏 <b>KAGE POKER</b>ga xush kelibsiz!\n\n"
-        f"💰 Sizning balansingiz: <b>{player['balance']:,}</b> 🪙\n\n"
-        f"Buyruqlar:\n"
-        f"/profile - Profilingiz\n"
-        f"/poker - Poker o'yinini boshlash\n"
-        f"/help - Yordam"
+        "♠️ <b>KAGE POKER</b> ga xush kelibsiz!\n\n"
+        "Texas Hold'em poker o'yini.\n"
+        "Faqat virtual chip. Real pul yo'q.\n\n"
+        "Buyruqlar:\n"
+        "/poker — O'yinni boshlash (guruhda)\n"
+        "/profile — Profilingiz\n"
+        "/rules — Qoidalar\n"
+        "/help — Yordam\n"
+        "/id — ID ni ko'rish"
     )
+    await message.answer(text)
 
+
+@router.message(Command("id"))
+async def cmd_id(message: Message):
+    text = (
+        f"👤 <b>Sizning ID:</b> <code>{message.from_user.id}</code>\n"
+        f"💬 <b>Chat ID:</b> <code>{message.chat.id}</code>\n"
+        f"📌 <b>Chat turi:</b> {message.chat.type}"
+    )
+    if message.chat.title:
+        text += f"\n🏷 <b>Guruh nomi:</b> {message.chat.title}"
     await message.answer(text)

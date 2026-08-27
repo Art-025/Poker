@@ -32,6 +32,15 @@ async def init_database():
             )
         """)
 
+await db.execute("""
+        CREATE TABLE IF NOT EXISTS approved_groups (
+            chat_id INTEGER PRIMARY KEY,
+            title TEXT,
+            approved_by INTEGER,
+            approved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
         await db.commit()
         print("Database tayyor!")
 

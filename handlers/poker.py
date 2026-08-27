@@ -149,3 +149,63 @@ async def start_game(callback: CallbackQuery):
 
     await callback.message.edit_text(text)
     await callback.answer("O'yin boshlandi!")
+
+    # Keyingi o'yinchiga o'tish
+    move_to_next_player(table)
+
+    # Agar raund tugagan bo'lsa — keyingi street
+    if is_betting_round_complete(table):
+        table.next_round()
+        if table.round == "showdown":
+            await do_showdown(callback.message, table)
+            return
+        # Yangi raund boshida current_bet = 0, birinchi active o'yinchidan boshlash
+        table.current_bet = 0
+        for p in table.players:
+            p.reset_for_new_round()
+        table.current_player_index = find_first_active(table)
+
+    await show_table_state(callback.message, table)
+
+
+def move_to_next_player(table: Table):
+    n = len(table.players)
+    for _ in range(n):
+        table.current_player_index = (table.current_player_index + 1) % n
+        p = table.players[table.current_player_index]
+        if p.status == "active":
+            return
+
+
+def find_first_active(table: Table) -> int:
+    for i, p in enumerate(table.players):
+        if p.status == "active":
+            return i
+    return 0
+
+
+def is_betting_round_complete(table: Table) -> bool:
+    active = [p for p in table.players if p.status == "active"]
+    if len(active) <= 1:
+        return True
+    return all(p.bet == table.current_bet for p in active)
+
+
+async def do_showdown(message: Message, table: Table):
+    winners = table.get_winners()
+    if not winners:
+        text = "O'yin tugadi. G'olib topilmadi."
+    else:
+        win_amount = table.pot // len(winners)
+        names = ", ".join(w.show_name() for w in winners)
+        for w in winners:
+            w.chips += win_amount
+        text = (
+            f"🏆 <b>SHOWDOWN</b>\n\n"
+            f"G'olib: {names}\n"
+            f"Yutgan summa: {win_amount} 🪙 (har biriga)\n"
+            f"Jami pot: {table.pot}"
+        )
+
+    table.status = "finished"
+    await message.edit_text(text)

@@ -209,3 +209,14 @@ async def do_showdown(message: Message, table: Table):
 
     table.status = "finished"
     await message.edit_text(text)
+
+@router.message(Command("id"))
+async def cmd_id(message: Message):
+    text = (
+        f"👤 <b>Sizning ID:</b> <code>{message.from_user.id}</code>\n"
+        f"💬 <b>Chat ID:</b> <code>{message.chat.id}</code>\n"
+        f"📌 <b>Chat turi:</b> {message.chat.type}"
+    )
+    if message.chat.title:
+        text += f"\n🏷 <b>Guruh nomi:</b> {message.chat.title}"
+    await message.answer(text)

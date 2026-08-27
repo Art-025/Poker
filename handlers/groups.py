@@ -1,87 +1,189 @@
-from aiogram import Router, F, Bot
-from aiogram.types import ChatMemberUpdated, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.filters import ChatMemberUpdatedFilter, IS_NOT_MEMBER, IS_MEMBER, IS_ADMIN
+from __future__ import annotations
 
-from database.database import is_group_approved, approve_group, remove_group
+import logging
+
+from aiogram import Bot, Router
+from aiogram.filters import IS_MEMBER, IS_NOT_MEMBER, ChatMemberUpdatedFilter
+from aiogram.types import (
+    CallbackQuery,
+    ChatMemberUpdated,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
+
 from config import ADMIN_ID
 
 router = Router()
 
-OWNER_ID = 1100194757  # Sizning ID
+logger = logging.getLogger(__name__)
+
+
+def build_group_keyboard(chat_id: int) -> InlineKeyboardMarkup:
+    """
+    Create confirmation buttons for a newly added group.
+    """
+
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="✅ Roziman",
+                    callback_data=f"group_accept:{chat_id}",
+                ),
+                InlineKeyboardButton(
+                    text="❌ Rad etaman",
+                    callback_data=f"group_reject:{chat_id}",
+                ),
+            ]
+        ]
+    )
 
 
 @router.my_chat_member(
-    ChatMemberUpdatedFilter(IS_NOT_MEMBER >> IS_MEMBER)
+    ChatMemberUpdatedFilter(
+        member_status_changed=IS_NOT_MEMBER >> IS_MEMBER
+    )
 )
-async def bot_added_to_group(event: ChatMemberUpdated, bot: Bot):
-    """Bot yangi guruhga qo'shilganda"""
+async def bot_added_to_group(
+    event: ChatMemberUpdated,
+    bot: Bot,
+) -> None:
+    """
+    Runs whenever the bot becomes a member of a group.
+
+    IMPORTANT:
+    This does NOT check who added the bot.
+    Even if the owner/admin personally adds the bot,
+    the notification is still sent.
+    """
+
     chat = event.chat
+    user = event.from_user
 
-    # Agar allaqachon ruxsat berilgan bo'lsa
-    if await is_group_approved(chat.id):
-        return
+    group_name = chat.title or "Noma'lum guruh"
+    group_id = chat.id
 
-    # Egaga xabar yuboramiz
+    if user:
+        username = (
+            f"@{user.username}"
+            if user.username
+            else user.full_name
+        )
+        user_id = user.id
+    else:
+        username = "Noma'lum foydalanuvchi"
+        user_id = "Noma'lum"
+
     text = (
-        "🔔 <b>Yangi guruhga qo'shildim!</b>\n\n"
-        f"📌 Guruh: <b>{chat.title}</b>\n"
-        f"🆔 Chat ID: <code>{chat.id}</code>\n\n"
-        "Bu guruhda ishlashga ruxsat berasizmi?"
+        "🤖 <b>KAGE POKER guruhga qo‘shildi!</b>\n\n"
+        f"📌 <b>Guruh:</b> {group_name}\n"
+        f"🆔 <b>Guruh ID:</b> <code>{group_id}</code>\n\n"
+        f"👤 <b>Qo‘shgan foydalanuvchi:</b> {username}\n"
+        f"🆔 <b>User ID:</b> <code>{user_id}</code>\n\n"
+        "Bot ushbu guruhga qo‘shildi."
     )
 
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="✅ Roziman", callback_data=f"approve_group:{chat.id}:{chat.title or 'No title'}"),
-            InlineKeyboardButton(text="❌ Rad etaman", callback_data=f"reject_group:{chat.id}")
-        ]
-    ])
+    keyboard = build_group_keyboard(group_id)
 
     try:
-        await bot.send_message(OWNER_ID, text, reply_markup=keyboard)
+        await bot.send_message(
+            chat_id=ADMIN_ID,
+            text=text,
+            reply_markup=keyboard,
+        )
+
+        logger.info(
+            "Bot added to group: chat_id=%s, title=%s, added_by=%s",
+            group_id,
+            group_name,
+            user_id,
+        )
+
     except Exception:
-        pass  # Egaga yozib bo'lmasa
+        logger.exception(
+            "Failed to notify ADMIN_ID=%s about new group %s",
+            ADMIN_ID,
+            group_id,
+        )
 
 
-@router.callback_query(F.data.startswith("approve_group:"))
-async def approve_group_callback(callback: CallbackQuery):
-    if callback.from_user.id != OWNER_ID:
-        await callback.answer("Sizda ruxsat yo'q.", show_alert=True)
+@router.callback_query(
+    lambda callback: callback.data
+    and callback.data.startswith("group_accept:")
+)
+async def accept_group(
+    callback: CallbackQuery,
+) -> None:
+    """
+    Handle the 'Roziman' button.
+    """
+
+    if callback.from_user.id != ADMIN_ID:
+        await callback.answer(
+            "❌ Bu tugmadan faqat bot administratori foydalanishi mumkin.",
+            show_alert=True,
+        )
         return
 
-    parts = callback.data.split(":", 2)
-    chat_id = int(parts[1])
-    title = parts[2] if len(parts) > 2 else "Unknown"
-
-    await approve_group(chat_id, title, OWNER_ID)
-
-    await callback.message.edit_text(
-        f"✅ <b>Ruxsat berildi!</b>\n\n"
-        f"Guruh: <b>{title}</b>\n"
-        f"Chat ID: <code>{chat_id}</code>\n\n"
-        "Endi bot bu guruhda ishlaydi."
-    )
-    await callback.answer("Guruh tasdiqlandi!")
-
-
-@router.callback_query(F.data.startswith("reject_group:"))
-async def reject_group_callback(callback: CallbackQuery, bot: Bot):
-    if callback.from_user.id != OWNER_ID:
-        await callback.answer("Sizda ruxsat yo'q.", show_alert=True)
-        return
-
-    chat_id = int(callback.data.split(":")[1])
-
-    await remove_group(chat_id)
-
-    # Ixtiyoriy: botni guruhdan chiqarib yuborish
     try:
-        await bot.leave_chat(chat_id)
-    except Exception:
-        pass
+        chat_id = int(callback.data.split(":", 1)[1])
+    except (ValueError, IndexError):
+        await callback.answer(
+            "❌ Guruh ID noto‘g‘ri.",
+            show_alert=True,
+        )
+        return
 
-    await callback.message.edit_text(
-        f"❌ <b>Rad etildi.</b>\n\n"
-        f"Chat ID: <code>{chat_id}</code>\n"
-        "Bot guruhdan chiqarildi."
-    )
-    await callback.answer("Guruh rad etildi.")
+    await callback.answer("✅ Guruh tasdiqlandi.")
+
+    try:
+        await callback.message.edit_text(
+            f"{callback.message.text}\n\n"
+            "✅ <b>Guruh tasdiqlandi.</b>\n"
+            f"🆔 <code>{chat_id}</code>"
+        )
+    except Exception:
+        logger.exception("Failed to edit accepted group message.")
+
+
+@router.callback_query(
+    lambda callback: callback.data
+    and callback.data.startswith("group_reject:")
+)
+async def reject_group(
+    callback: CallbackQuery,
+    bot: Bot,
+) -> None:
+    """
+    Handle the 'Rad etaman' button.
+
+    Currently this only records the rejection in the admin message.
+    The actual group-leave logic can be added later.
+    """
+
+    if callback.from_user.id != ADMIN_ID:
+        await callback.answer(
+            "❌ Bu tugmadan faqat bot administratori foydalanishi mumkin.",
+            show_alert=True,
+        )
+        return
+
+    try:
+        chat_id = int(callback.data.split(":", 1)[1])
+    except (ValueError, IndexError):
+        await callback.answer(
+            "❌ Guruh ID noto‘g‘ri.",
+            show_alert=True,
+        )
+        return
+
+    await callback.answer("❌ Guruh rad etildi.")
+
+    try:
+        await callback.message.edit_text(
+            f"{callback.message.text}\n\n"
+            "❌ <b>Guruh rad etildi.</b>\n"
+            f"🆔 <code>{chat_id}</code>"
+        )
+    except Exception:
+        logger.exception("Failed to edit rejected group message.")

@@ -247,3 +247,8 @@ async def cancel_game(callback: CallbackQuery):
     )
     await callback.answer("O'yin bekor qilindi.")
 
+# O'yinni bekor qilish
+    buttons.append([
+        InlineKeyboardButton(text="🚫 O'YINNI BEKOR QILISH", callback_data="cancel_game")
+    ])
+

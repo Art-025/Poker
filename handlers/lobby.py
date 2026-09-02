@@ -214,3 +214,36 @@ async def start_game(callback: CallbackQuery):
         await callback.message.edit_text(text)
 
     await callback.answer("O'yin boshlandi!")
+
+@router.callback_query(F.data == "cancel_game")
+async def cancel_game(callback: CallbackQuery):
+    chat_id = callback.message.chat.id
+    user_id = callback.from_user.id
+
+    if chat_id not in tables:
+        await callback.answer("O'yin topilmadi.", show_alert=True)
+        return
+
+    table = tables[chat_id]
+
+    # Faqat o'yin ketayotganda
+    if table.status != "playing":
+        await callback.answer("Hozir o'yin ketmayapti.", show_alert=True)
+        return
+
+    # Faqat o'yindagi o'yinchilar yoki admin bekor qila oladi
+    player = table.get_player(user_id)
+    if not player and user_id != 1100194757:
+        await callback.answer("Faqat o'yindagi o'yinchilar bekor qila oladi.", show_alert=True)
+        return
+
+    # O'yinni yopish
+    tables.pop(chat_id, None)
+    lobby_messages.pop(chat_id, None)
+
+    await callback.message.edit_text(
+        "❌ <b>O'yin bekor qilindi.</b>\n\n"
+        "Yangi o'yin boshlash uchun /poker yozing."
+    )
+    await callback.answer("O'yin bekor qilindi.")
+

@@ -74,22 +74,21 @@ async def cmd_poker(message: Message):
         await message.answer("⚠️ Hozir bu guruhda o'yin ketmoqda.")
         return
 
-    # Agar lobby ochiq bo'lsa
-    if chat_id in tables and tables[chat_id].status == "waiting":
-        await message.answer("ℹ️ Lobby allaqachon ochiq. JOIN bosing yoki kutib turing.")
-        return
+    # Agar o'yin ketayotgan bo'lsa
+if chat_id in tables and tables[chat_id].status == "playing":
+    await message.answer("⚠️ Hozir bu guruhda o'yin ketmoqda. Tugashini kuting.").")
+    return
 
-    # Yangi lobby
-    table = Table(chat_id=chat_id)
-    table.status = "waiting"
-    table.created_at = datetime.now()
-    tables[chat_id] = table
-
-    msg = await message.answer(
-        get_lobby_text(table, LOBBY_TIME),
-        reply_markup=get_lobby_keyboard(0)
+# Agar lobby ochiq bo'lsa
+if chat_id in tables and tables[chat_id].status == "waiting":
+    table = tables[chat_id]
+    players_count = len(table.players)
+    await message.answer(
+        f"ℹ️ Lobby allaqachon ochiq.\n"
+        f"Hozir {players_count} ta o'yinchi bor.\n\n"
+        f"JOIN tugmasini bosing yoki eski lobbyni bekor qilish uchun ❌ BEKOR QILISH ni bosing."
     )
-    lobby_messages[chat_id] = msg.message_id
+    return
 
     # Timer ishga tushiramiz
     asyncio.create_task(lobby_timer(chat_id, message.bot))

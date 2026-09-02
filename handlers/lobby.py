@@ -50,7 +50,6 @@ def get_lobby_text(table: Table, seconds_left: int = None):
         "Vaqt tugasa stol avtomatik yopiladi."
     )
 
-
 @router.message(Command("poker"))
 async def cmd_poker(message: Message):
     if message.chat.type == "private":
@@ -58,6 +57,16 @@ async def cmd_poker(message: Message):
         return
 
     chat_id = message.chat.id
+
+    # === RUXSAT TEKSHIRUVI ===
+    if not await is_group_approved(chat_id):
+        await message.answer(
+            "🚫 <b>Ruxsat berilmagan!</b>\n\n"
+            "Bu guruhda botdan foydalanish uchun egadan ruxsat olish kerak.\n"
+            "Ruxsat so‘rash uchun botni guruhga qayta qo‘shing yoki egaga murojaat qiling."
+        )
+        return
+    # ========================
 
     # Agar o'yin ketayotgan bo'lsa
     if chat_id in tables and tables[chat_id].status == "playing":
@@ -83,36 +92,6 @@ async def cmd_poker(message: Message):
 
     # Timer ishga tushiramiz
     asyncio.create_task(lobby_timer(chat_id, message.bot))
-
-
-async def lobby_timer(chat_id: int, bot):
-    """60 soniya kutadi, keyin stolni yopadi"""
-    await asyncio.sleep(LOBBY_TIME)
-
-    if chat_id not in tables:
-        return
-
-    table = tables[chat_id]
-
-    # Agar o'yin boshlangan bo'lsa — hech narsa qilmaymiz
-    if table.status == "playing":
-        return
-
-    # Lobby hali ham waiting holatida
-    if table.status == "waiting":
-        try:
-            await bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=lobby_messages.get(chat_id),
-                text="⌛ <b>Vaqt tugadi!</b>\n\nYetarli o'yinchi yig'ilmadi yoki START bosilmadi.\nStol yopildi.\n\nYana ochish uchun /poker yozing."
-            )
-        except Exception:
-            pass
-
-        # Stolni o'chiramiz
-        tables.pop(chat_id, None)
-        lobby_messages.pop(chat_id, None)
-
 
 @router.callback_query(F.data == "join_poker")
 async def join_poker(callback: CallbackQuery):

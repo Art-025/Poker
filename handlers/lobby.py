@@ -163,7 +163,6 @@ async def cancel_lobby(callback: CallbackQuery):
     await callback.message.edit_text("❌ Lobby bekor qilindi.\n\nYana ochish uchun /poker yozing.")
     await callback.answer("Lobby yopildi.")
 
-
 @router.callback_query(F.data == "start_game")
 async def start_game(callback: CallbackQuery):
     chat_id = callback.message.chat.id
@@ -203,15 +202,16 @@ async def start_game(callback: CallbackQuery):
                 f"U botga private chatda /start bosishi kerak."
             )
 
-    players_text = "\n".join([f"• {p.show_name()} — {p.chips} 🪙" for p in table.players])
-    text = (
-        "🚀 <b>O'YIN BOSHLANDI!</b>\n\n"
-        f"💰 Pot: {table.pot} 🪙\n"
-        f"🃏 Raund: Pre-flop\n\n"
-        f"<b>O'yinchilar:</b>\n{players_text}\n\n"
-        "Kartalar private chatga yuborildi.\n"
-        "Betting tez orada qo'shiladi."
-    )
+    # Birinchi o'yinchiga tugmalar bilan xabar
+    from poker.actions import get_action_keyboard, get_waiting_text
 
-    await callback.message.edit_text(text)
+    current = table.get_current_player()
+    text = get_waiting_text(table)
+
+    if current:
+        kb = get_action_keyboard(current, table)
+        await callback.message.edit_text(text, reply_markup=kb)
+    else:
+        await callback.message.edit_text(text)
+
     await callback.answer("O'yin boshlandi!")

@@ -15,6 +15,7 @@ from handlers.help import router as help_router
 from handlers.rules import router as rules_router
 from handlers.lobby import router as lobby_router
 from handlers.groups import router as groups_router
+from handlers.poker import router as poker_router
 
 # Logging
 logging.basicConfig(level=logging.INFO)

@@ -7,6 +7,7 @@ from aiogram.filters import Command
 from poker.table import Table
 from poker.player import Player
 from database.database import get_or_create_player
+from database.database import is_group_approved, get_or_create_player
 
 router = Router()
 

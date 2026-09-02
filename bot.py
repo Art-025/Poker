@@ -34,13 +34,6 @@ dp.include_router(transfer_router)
 dp.include_router(help_router)
 dp.include_router(rules_router)
 dp.include_router(lobby_router)
-dp.include_router(groups_router)
-dp.include_router(start_router)
-dp.include_router(profile_router)
-dp.include_router(transfer_router)
-dp.include_router(help_router)
-dp.include_router(rules_router)
-dp.include_router(lobby_router)
 dp.include_router(poker_router)      # ← SHU QATORNI QO‘SHING
 
 

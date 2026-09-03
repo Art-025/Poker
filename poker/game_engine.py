@@ -88,9 +88,14 @@ def advance_round(table: Table) -> str:
     return ""
 
 
-def determine_winners(table: Table) -> List[Player]:
+def determine_winners(table: Table) -> list:
     """Eng kuchli qo'lga ega o'yinchilarni topadi"""
-    contenders = [p for p in table.players if p.status in ("active", "all-in")]
+    contenders = [p for p in table.players if p.status in ("active", "all-in", "allin")]
+    
+    if not contenders:
+        # Agar hammasi fold qilgan bo'lsa, oxirgi qolgan odamni olamiz
+        contenders = [p for p in table.players if p.status != "folded"]
+    
     if not contenders:
         return []
 

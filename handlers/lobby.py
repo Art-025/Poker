@@ -69,9 +69,10 @@ async def cmd_poker(message: Message):
         return
     # ========================
 
-    # Agar o'yin ketayotgan bo'lsa
+# Agar o'yin ketayotgan bo'lsa
 if chat_id in tables and tables[chat_id].status == "playing":
     await message.answer("⚠️ Hozir bu guruhda o'yin ketmoqda. Tugashini kuting.")
+   
 
 # Agar lobby ochiq bo'lsa
 if chat_id in tables and tables[chat_id].status == "waiting":

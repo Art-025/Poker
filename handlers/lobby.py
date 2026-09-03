@@ -258,3 +258,4 @@ async def cancel_game(callback: CallbackQuery):
         InlineKeyboardButton(text="🚫 O'YINNI BEKOR QILISH", callback_data="cancel_game")
     ])
 
+ 

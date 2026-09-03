@@ -130,14 +130,16 @@ def finish_hand(table: Table) -> str:
         amount = share + (1 if i < remainder else 0)
         winner.chips += amount
         score = evaluate_hand(winner.hole_cards, table.community_cards)
+        hand = hand_name(score[0])
         result_lines.append(
-            f"🏆 {winner.show_name()} — {hand_name(score[0])} (+{amount} 🪙)"
+            f"🏆 {winner.show_name()} — <b>{hand}</b> (+{amount} 🪙)"
         )
 
     table.pot = 0
     table.status = "finished"
 
     # Keyingi o'yin uchun dealer siljiydi
-    table.dealer_index = (table.dealer_index + 1) % len(table.players)
+    if table.players:
+        table.dealer_index = (table.dealer_index + 1) % len(table.players)
 
-    return "\n".join(result_lines) 
+    return "\n".join(result_lines)

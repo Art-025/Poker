@@ -50,7 +50,6 @@ def get_lobby_text(table: Table, seconds_left: int = None):
         f"Kamida {MIN_PLAYERS} kishi bo'lganda START bosish mumkin.\n"
         "Vaqt tugasa stol avtomatik yopiladi."
     )
-
 @router.message(Command("poker"))
 async def cmd_poker(message: Message):
     if message.chat.type == "private":
@@ -69,24 +68,36 @@ async def cmd_poker(message: Message):
         return
     # ========================
 
-# Agar o'yin ketayotgan bo'lsa
-if chat_id in tables and tables[chat_id].status == "playing":
-    await message.answer("⚠️ Hozir bu guruhda o'yin ketmoqda. Tugashini kuting.")
-   
+    # Agar o'yin ketayotgan bo'lsa
+    if chat_id in tables and tables[chat_id].status == "playing":
+        await message.answer("⚠️ Hozir bu guruhda o'yin ketmoqda. Tugashini kuting.")
+        return
 
-# Agar lobby ochiq bo'lsa
-if chat_id in tables and tables[chat_id].status == "waiting":
-    table = tables[chat_id]
-    players_count = len(table.players)
-    await message.answer(
-        f"ℹ️ Lobby allaqachon ochiq.\n"
-        f"Hozir {players_count} ta o'yinchi bor.\n\n"
-        f"JOIN tugmasini bosing yoki eski lobbyni bekor qilish uchun ❌ BEKOR QILISH ni bosing."
+    # Agar lobby ochiq bo'lsa
+    if chat_id in tables and tables[chat_id].status == "waiting":
+        table = tables[chat_id]
+        players_count = len(table.players)
+        await message.answer(
+            f"ℹ️ Lobby allaqachon ochiq.\n"
+            f"Hozir {players_count} ta o'yinchi bor.\n\n"
+            f"JOIN tugmasini bosing yoki eski lobbyni bekor qilish uchun ❌ BEKOR QILISH ni bosing."
+        )
+        return
+
+    # Yangi lobby ochish
+    table = Table(chat_id=chat_id)
+    table.status = "waiting"
+    table.created_at = datetime.now()
+    tables[chat_id] = table
+
+    msg = await message.answer(
+        get_lobby_text(table, LOBBY_TIME),
+        reply_markup=get_lobby_keyboard(0)
     )
-    return
+    lobby_messages[chat_id] = msg.message_id
 
-    # Timer ishga tushiramiz
     asyncio.create_task(lobby_timer(chat_id, message.bot))
+
 
 @router.callback_query(F.data == "join_poker")
 async def join_poker(callback: CallbackQuery):

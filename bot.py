@@ -17,24 +17,23 @@ from handlers.lobby import router as lobby_router
 from handlers.groups import router as groups_router
 from handlers.poker import router as poker_router
 
-# Logging
 logging.basicConfig(level=logging.INFO)
 
 bot = Bot(
     token=BOT_TOKEN,
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
 )
+
 dp = Dispatcher()
 
-# Routerlarni ulash
-dp.include_router(groups_router)      # Eng birinchi (muhim)
+dp.include_router(groups_router)
 dp.include_router(start_router)
 dp.include_router(profile_router)
 dp.include_router(transfer_router)
 dp.include_router(help_router)
 dp.include_router(rules_router)
 dp.include_router(lobby_router)
-dp.include_router(poker_router)      # ← SHU QATORNI QO‘SHING
+dp.include_router(poker_router)
 
 
 async def main():

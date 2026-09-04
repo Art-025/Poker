@@ -85,3 +85,26 @@ async def remove_group(chat_id: int):
             "DELETE FROM approved_groups WHERE chat_id = ?", (chat_id,)
         )
         await db.commit()
+
+async def update_balance(user_id: int, new_balance: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "UPDATE players SET balance = ? WHERE user_id = ?",
+            (new_balance, user_id)
+        )
+        await db.commit()
+
+
+async def add_game_result(user_id: int, won: bool = False):
+    async with aiosqlite.connect(DB_PATH) as db:
+        if won:
+            await db.execute(
+                "UPDATE players SET games_played = games_played + 1, games_won = games_won + 1 WHERE user_id = ?",
+                (user_id,)
+            )
+        else:
+            await db.execute(
+                "UPDATE players SET games_played = games_played + 1 WHERE user_id = ?",
+                (user_id,)
+            )
+        await db.commit()

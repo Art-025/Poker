@@ -50,33 +50,28 @@ async def handle_action(callback: CallbackQuery):
 
     # Betting raundi tugadimi?
     if is_betting_round_over(table):
-        if table.round_name == "river":
+       
+if table.round_name == "river":
             # Showdown
             winners_text = finish_hand(table)
+
+            # Chipni database ga saqlash
+            from database.database import update_balance, add_game_result
+
+            for p in table.players:
+                await update_balance(p.user_id, p.chips)
+                won = p in determine_winners(table) if hasattr(table, 'players') else False
+                # Oddiyroq variant:
+                is_winner = p.show_name() in winners_text
+                await add_game_result(p.user_id, won=is_winner)
+
             text = (
                 f"🏁 <b>SHOWDOWN!</b>\n\n"
                 f"{get_waiting_text(table)}\n\n"
-                f"<b>Natija:</b>\n{winners_text}"
+                f"<b>Natija:</b>\n{winners_text}\n\n"
+                f"✅ Chip lar saqlandi."
             )
             await callback.message.edit_text(text)
             tables.pop(chat_id, None)
             await callback.answer("O'yin tugadi!")
             return
-        else:
-            # Keyingi raund (Flop / Turn / River)
-            advance_round(table)
-            # Birinchi harakat qiluvchini belgilash
-            table.current_player_index = table.dealer_index
-            table.next_player()
-
-    # Yangi holatni ko'rsatish
-    current = table.get_current_player()
-    text = get_waiting_text(table)
-
-    if current and table.status == "playing":
-        kb = get_action_keyboard(current, table)
-        await callback.message.edit_text(text, reply_markup=kb)
-    else:
-        await callback.message.edit_text(text)
-
-    await callback.answer(result)

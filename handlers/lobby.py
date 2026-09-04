@@ -119,24 +119,31 @@ async def join_poker(callback: CallbackQuery):
         await callback.answer("Siz allaqachon stolga qo'shilgansiz.", show_alert=True)
         return
 
-    db_player = await get_or_create_player(
+   db_player = await get_or_create_player(
         user_id=user.id,
         username=user.username,
         full_name=user.full_name
     )
 
     if db_player["balance"] < BUY_IN:
-        await callback.answer(f"❌ Yetarli chip yo'q (kamida {BUY_IN} kerak).", show_alert=True)
+        await callback.answer(
+            f"❌ Yetarli chip yo'q (kamida {BUY_IN} kerak).\n"
+            f"Sizda: {db_player['balance']} 🪙",
+            show_alert=True
+        )
         return
+
+    # Database dan chip olamiz
+    from database.database import update_balance
+    new_balance = db_player["balance"] - BUY_IN
+    await update_balance(user.id, new_balance)
 
     player = Player(
         user_id=user.id,
         username=user.username,
         full_name=user.full_name
     )
-    player.chips = BUY_IN
-
-    table.add_player(player)
+    player.chips = BUY_IN 
 
     # Qolgan vaqtni hisoblash
     elapsed = (datetime.now() - table.created_at).seconds

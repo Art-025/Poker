@@ -76,13 +76,19 @@ async def cmd_poker(message: Message):
     # Agar lobby ochiq bo'lsa
     if chat_id in tables and tables[chat_id].status == "waiting":
         table = tables[chat_id]
-        players_count = len(table.players)
-        await message.answer(
-            f"ℹ️ Lobby allaqachon ochiq.\n"
-            f"Hozir {players_count} ta o'yinchi bor.\n\n"
-            f"JOIN tugmasini bosing yoki eski lobbyni bekor qilish uchun ❌ BEKOR QILISH ni bosing."
-        )
-        return
+        
+        # Agar o'yinchi yo'q bo'lsa — eski lobbyni o'chiramiz
+        if len(table.players) == 0:
+            tables.pop(chat_id, None)
+            lobby_messages.pop(chat_id, None)
+        else:
+            players_count = len(table.players)
+            await message.answer(
+                f"ℹ️ Lobby allaqachon ochiq.\n"
+                f"Hozir {players_count} ta o'yinchi bor.\n\n"
+                f"JOIN tugmasini bosing yoki ❌ BEKOR QILISH ni bosing."
+            )
+            return
 
     # Yangi lobby ochish
     table = Table(chat_id=chat_id)

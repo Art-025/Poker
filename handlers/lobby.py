@@ -119,7 +119,7 @@ async def join_poker(callback: CallbackQuery):
         await callback.answer("Siz allaqachon stolga qo'shilgansiz.", show_alert=True)
         return
 
-   db_player = await get_or_create_player(
+    db_player = await get_or_create_player(
         user_id=user.id,
         username=user.username,
         full_name=user.full_name
@@ -127,8 +127,7 @@ async def join_poker(callback: CallbackQuery):
 
     if db_player["balance"] < BUY_IN:
         await callback.answer(
-            f"❌ Yetarli chip yo'q (kamida {BUY_IN} kerak).\n"
-            f"Sizda: {db_player['balance']} 🪙",
+            f"❌ Yetarli chip yo'q (kamida {BUY_IN} kerak).\nSizda: {db_player['balance']} 🪙",
             show_alert=True
         )
         return
@@ -143,7 +142,9 @@ async def join_poker(callback: CallbackQuery):
         username=user.username,
         full_name=user.full_name
     )
-    player.chips = BUY_IN 
+    player.chips = BUY_IN
+
+    table.add_player(player)
 
     # Qolgan vaqtni hisoblash
     elapsed = (datetime.now() - table.created_at).seconds
@@ -154,7 +155,6 @@ async def join_poker(callback: CallbackQuery):
         reply_markup=get_lobby_keyboard(len(table.players))
     )
     await callback.answer(f"{user.first_name} qo'shildi!")
-
 
 @router.callback_query(F.data == "cancel_lobby")
 async def cancel_lobby(callback: CallbackQuery):
